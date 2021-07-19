@@ -13,7 +13,7 @@ print(drone.get_battery())
 def getInput():
     lr, fb, ud, yv = 0, 0, 0, 0
     x = 60 
-
+    #key press detection
     if key.is_pressed('left'): 
         lr = -x
     elif key.is_pressed('right'): 
@@ -62,6 +62,7 @@ def capture(i):
     cv2.imwrite(loc1, cap)
     
 def panorama():
+    #image capture begin
     ntg()
     right()
     capture(1)
@@ -72,6 +73,7 @@ def panorama():
     right()
     ntg()
     
+    #image stitch' processing
     pano_bridge()
     
 def features():
@@ -79,9 +81,13 @@ def features():
         panorama()
 
 while True:
+    #manual controls
     val = getInput()
     drone.send_rc_control(val[0], val[1], val[2], val[3])
+    #feature detection
     features()
+    #get frames from tello
     frame = drone.get_frame_read().frame
+    #output live relay
     cv2.imshow("Live Stream", frame)
     cv2.waitKey(1)
