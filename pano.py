@@ -1,6 +1,8 @@
-import cv2 as cv
+#importing libraries
 import numpy as np
+import cv2
 
+#image stitch coordinator
 def pano_bridge():
     # for 160* 
     pano('pics/1.jpg','pics/2.jpg','pics/pTemp.jpg')
@@ -9,56 +11,58 @@ def pano_bridge():
     # for 360*
     #....dev in prog....
 
-def pano(dir1,dir2,dirN):
+#panorama generator
+def pano(dir1,dir2,fName):
    
-    # Read two pictures
-    imageR = cv.imread(dir1)
-    grayR = cv.cvtColor(imageR, cv.COLOR_BGR2GRAY)
-    imageL = cv.imread(dir2)
-    grayL = cv.cvtColor(imageL, cv.COLOR_BGR2GRAY)
+    #read two pictures
+    imageR = cv2.imread(dir1)
+    grayR = cv2.cvtColor(imageR, cv2.COLOR_BGR2GRAY)
+    imageL = cv2.imread(dir2)
+    grayL = cv2.cvtColor(imageL, cv2.COLOR_BGR2GRAY)
     
     
-    # Detect two image key points and feature description factors
-    sift = cv.SIFT_create()
+    #detecting two image key points and feature description
+    sift = cv2.SIFT_create()
     kp1, des1 = sift.detectAndCompute(grayL, None)
     kp2, des2 = sift.detectAndCompute(grayR, None)
     
-    # Make a match
-    matcher = cv.BFMatcher(cv.NORM_L2)
-    # k'n'nmatch 
+    #making a match
+    matcher = cv2.BFMatcher(cv2.NORM_L2)
+    #knn match 
     rawMatcher = matcher.knnMatch(des1, des2, 2)
     
-    # Process the matched feature points
+    #processing the matched feature points
     matchersTrain = []
     matchersQuery = []
     for matchA, matchB in rawMatcher:
-        # Arrange the distance between the two matches from small to large
+        #arrange the distance between the two matches from small to large
         if matchA.distance < matchB.distance*0.75:
-            # Save the position of two points in des
+            #save the position of two points in des
             matchersTrain.append(matchA.trainIdx)
             matchersQuery.append(matchA.queryIdx)
             
     H = 0
-    # Calculate the transformation matrix after obtaining more than 4 coordinates
+    
+    #calculating the transformation matrix after obtaining > 4 coordinates
     if len(matchersTrain) > 4:
-        # Get a list of key points
+        #getting a list of key points
         locL = np.float32([kp1[i].pt for i in matchersQuery])
         locR = np.float32([kp2[i].pt for i in matchersTrain])
-        H, status = cv.findHomography(locR, locL, cv.RANSAC)
+        H, status = cv2.findHomography(locR, locL, cv2.RANSAC)
 
     else:
         print("Not enough points were found to match")
         
-    # Transform the image on the right
+    #transform the image on the right
          
-    change = cv.warpPerspective(imageR, H, (imageL.shape[1] + imageR.shape[1], imageL.shape[0]))
+    change = cv2.warpPerspective(imageR, H, (imageL.shape[1] + imageR.shape[1], imageL.shape[0]))
         
 
 
-    # Combine pictures
+    #combining the pics
     change[0:imageL.shape[0], 0:imageL.shape[1]] = imageL
 
-    # Save original image 
-    cv.imwrite(dirN,change)
+    #panorama genertation  
+    cv2.imwrite(fName,change)
     
-    cv.waitKey(0)
+    cv2.waitKey(0)
